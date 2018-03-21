@@ -55,7 +55,7 @@
             <v-spacer></v-spacer>
             <v-btn
               :loading="loading"
-              :disabled="!valid || !image || loading"
+              :disabled="!valid || !imageSrc || loading"
               class="success"
               @click="createAd"
             >
@@ -76,7 +76,6 @@
         description: '',
         promo: false,
         valid: false,
-        image: null,
         imageSrc: ''
       }
     },
@@ -87,12 +86,12 @@
     },
     methods: {
       createAd () {
-        if (this.$refs.form.validate() && this.image) {
+        if (this.$refs.form.validate() && this.imageSrc) {
           const ad = {
             title: this.title,
             description: this.description,
             promo: this.promo,
-            image: this.image
+            image: this.imageSrc
           }
 
           this.$store.dispatch('createAd', ad)
@@ -113,7 +112,6 @@
           this.imageSrc = reader.result
         }
         reader.readAsDataURL(file)
-        this.image = file
       }
     }
   }

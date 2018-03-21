@@ -1,4 +1,4 @@
-import * as fb from 'firebase'
+import {delay} from '../delay'
 
 class Ad {
   constructor (title, description, ownerId, imageSrc = '', promo = false, id = null) {
@@ -10,6 +10,12 @@ class Ad {
     this.id = id
   }
 }
+
+const INITIAL_ADS = [
+  new Ad('Lamborghini Aventador', 'Very fast and modern car', 'fuid', 'https://www.lamborghini.com/sites/it-en/files/DAM/lamborghini/share%20img/aventador-coupe-facebook-og.jpg', true, 'lamborgini-aventador-2017'),
+  new Ad('Bugatti Veyron', 'The most expensive and cool car ever', 'fuid', 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Bugatti_Veyron_-_BCN_motorshow_2009.JPG/1200px-Bugatti_Veyron_-_BCN_motorshow_2009.JPG', true, 'buggati-veron-2018'),
+  new Ad('Porsche Panamera', 'Very elite looking car!', 'fuid', 'https://ag-spots-2017.o.auroraobjects.eu/2017/02/26/porsche-panamera-turbo-s-c609926022017232228_2.jpg', true, 'porshe-panamera-2018')
+]
 
 export default {
   state: {
@@ -36,32 +42,19 @@ export default {
       commit('clearError')
       commit('setLoading', true)
 
-      const image = payload.image
-
       try {
-        const newAd = new Ad(
+        const ad = await delay(1000, new Ad(
           payload.title,
           payload.description,
           getters.user.id,
-          '',
-          payload.promo
-        )
-
-        const ad = await fb.database().ref('ads').push(newAd)
-        const imageExt = image.name.slice(image.name.lastIndexOf('.'))
-
-        const fileData = await fb.storage().ref(`ads/${ad.key}.${imageExt}`).put(image)
-        const imageSrc = fileData.metadata.downloadURLs[0]
-
-        await fb.database().ref('ads').child(ad.key).update({
-          imageSrc
-        })
+          payload.image,
+          payload.promo,
+          Math.random() + 'uid'
+        ))
 
         commit('setLoading', false)
         commit('createAd', {
-          ...newAd,
-          id: ad.key,
-          imageSrc
+          ...ad
         })
       } catch (error) {
         commit('setError', error.message)
@@ -73,18 +66,8 @@ export default {
       commit('clearError')
       commit('setLoading', true)
 
-      const resultAds = []
-
       try {
-        const fbVal = await fb.database().ref('ads').once('value')
-        const ads = fbVal.val()
-
-        Object.keys(ads).forEach(key => {
-          const ad = ads[key]
-          resultAds.push(
-            new Ad(ad.title, ad.description, ad.ownerId, ad.imageSrc, ad.promo, key)
-          )
-        })
+        const resultAds = await delay(750, INITIAL_ADS)
 
         commit('loadAds', resultAds)
         commit('setLoading', false)
@@ -99,9 +82,7 @@ export default {
       commit('setLoading', true)
 
       try {
-        await fb.database().ref('ads').child(id).update({
-          title, description
-        })
+        await delay(500)
         commit('updateAd', {
           title, description, id
         })

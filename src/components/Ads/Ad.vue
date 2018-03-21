@@ -9,7 +9,7 @@
           ></v-card-media>
           <v-card-text>
             <h1 class="text--primary">{{ad.title}}</h1>
-            <p>{{ad.description}}</p>
+            <p style="white-space: pre-line">{{ad.description}}</p>
           </v-card-text>
           <v-card-actions>
             <v-spacer></v-spacer>

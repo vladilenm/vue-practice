@@ -1,4 +1,4 @@
-import * as fb from 'firebase'
+import {delay} from '../delay'
 
 class Order {
   constructor (name, phone, adId, done = false, id = null) {
@@ -8,6 +8,13 @@ class Order {
     this.done = done
     this.id = id
   }
+}
+
+const ORDERS = {
+  'fuid': [
+    new Order('Vladilen', '8-921-232-21-23', 'lamborgini-aventador-2017', false, 'random-imewk32'),
+    new Order('Maxim', '8-921-232-21-23', 'buggati-veron-2018', true, 'randomfewfw323423-imewk32')
+  ]
 }
 
 export default {
@@ -21,11 +28,17 @@ export default {
   },
   actions: {
     async createOrder ({commit}, {name, phone, adId, ownerId}) {
-      const order = new Order(name, phone, adId)
+      const order = new Order(name, phone, adId, false, Math.random() + 'unicmqk')
       commit('clearError')
 
       try {
-        await fb.database().ref(`/users/${ownerId}/orders`).push(order)
+        await delay(500)
+
+        if (typeof ORDERS[ownerId] === 'undefined') {
+          ORDERS[ownerId] = []
+        }
+
+        ORDERS[ownerId].push(order)
       } catch (error) {
         commit('setError', error.message)
         throw error
@@ -35,18 +48,9 @@ export default {
       commit('setLoading', true)
       commit('clearError')
 
-      const resultOrders = []
-
       try {
-        const fbVal = await fb.database().ref(`/users/${getters.user.id}/orders`).once('value')
-        const orders = fbVal.val()
-
-        Object.keys(orders).forEach(key => {
-          const o = orders[key]
-          resultOrders.push(
-            new Order(o.name, o.phone, o.adId, o.done, key)
-          )
-        })
+        const userId = getters.user.id
+        const resultOrders = await delay(500, ORDERS[userId] || [])
 
         commit('loadOrders', resultOrders)
         commit('setLoading', false)
@@ -58,9 +62,13 @@ export default {
     async markOrderDone ({commit, getters}, payload) {
       commit('clearError')
       try {
-        await fb.database().ref(`/users/${getters.user.id}/orders`).child(payload).update({
-          done: true
-        })
+        await delay(300)
+
+        const userId = getters.user.id
+        if (ORDERS[userId]) {
+          const order = ORDERS[userId].find(o => o.id === payload)
+          order.done = true
+        }
       } catch (error) {
         commit('setError', error.message)
         throw error
